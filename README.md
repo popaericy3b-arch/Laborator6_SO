@@ -35,7 +35,7 @@ că doar un proces la un moment dat atinge memoria, deci aceasta e mereu într-o
 
 ```
 windows/contor.c   – Windows API: CreateFileMapping, MapViewOfFile, CreateSemaphore
-linux/contor.c     – POSIX: shm_open, mmap, sem_open
+linux/contor.c     – POSIX (Linux si macOS): shm_open, mmap, sem_open
 ```
 
 ## Compilare și rulare
@@ -49,7 +49,7 @@ contor.exe
 
 sau `cl windows\contor.c` din Developer Command Prompt.
 
-**Linux**:
+**Linux / macOS**:
 
 ```
 make

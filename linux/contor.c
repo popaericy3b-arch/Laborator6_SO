@@ -1,5 +1,5 @@
 /*
- * Comunicare intre doua procese printr-un obiect mapat in memorie (POSIX / Linux).
+ * Comunicare intre doua procese printr-un obiect mapat in memorie (POSIX: Linux si macOS).
  *
  * Aceeasi logica ca varianta Windows:
  *   1. rezerva semaforul (sem_wait)
@@ -117,8 +117,8 @@ static int proces_parinte(const char *cale_exe)
             /* exec => procesul devine o aplicatie independenta */
             char idx[4];
             snprintf(idx, sizeof(idx), "%d", i);
-            execl(cale_exe, cale_exe, "copil", idx, (char *)NULL);
-            perror("execl");
+            execlp(cale_exe, cale_exe, "copil", idx, (char *)NULL);
+            perror("execlp");
             _exit(1);
         }
         printf("Pornit procesul %d cu PID %d\n", i, (int)copii[i]);
@@ -143,5 +143,6 @@ int main(int argc, char *argv[])
     if (argc >= 3 && strcmp(argv[1], "copil") == 0)
         return proces_copil(atoi(argv[2]) ? 1 : 0);
 
-    return proces_parinte("/proc/self/exe");
+    /* argv[0] = calea programului curent (merge pe Linux si pe macOS) */
+    return proces_parinte(argv[0]);
 }
