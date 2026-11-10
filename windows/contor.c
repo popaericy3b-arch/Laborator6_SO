@@ -1,20 +1,3 @@
-/*
- * Comunicare intre doua procese printr-un obiect mapat in memorie (Windows API).
- *
- * Doua procese numara impreuna de la 1 la 1000 intr-o zona de memorie partajata:
- *   1. rezerva semaforul (WaitForSingleObject)
- *   2. citeste numarul din memorie
- *   3. da cu banul (rand() % 2 + 1); cat timp cade 2, scrie in memorie urmatorul numar
- *   4. elibereaza semaforul (ReleaseSemaphore)
- *
- * Rulare:  contor.exe          -> procesul parinte creeaza memoria + semaforul
- *                                 si porneste 2 procese copil (CreateProcess)
- *          contor.exe copil    -> folosit intern de parinte
- *
- * Compilare (MinGW):  gcc contor.c -o contor.exe
- * Compilare (MSVC):   cl contor.c
- */
-
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,11 +7,11 @@
 #define NUME_SEMAFOR  "Local\\ContorSemafor"
 #define LIMITA        1000
 
-/* Structura care traieste in memoria partajata ("terenul neutru") */
+
 typedef struct {
-    int  numar;            /* ultimul numar scris */
-    DWORD ultimul_pid;     /* procesul care a scris ultimul numar */
-    int  scrieri[2];       /* cate numere a scris fiecare copil */
+    int  numar; 
+    DWORD ultimul_pid; 
+    int  scrieri[2];  
 } ZonaPartajata;
 
 static int proces_copil(int index)
@@ -59,17 +42,14 @@ static int proces_copil(int index)
     srand((unsigned)(GetTickCount() ^ (pid << 8)));
 
     for (;;) {
-        /* 1. Rezerva semaforul: de aici memoria e doar a noastra */
         WaitForSingleObject(hSem, INFINITE);
 
-        /* 2. Citeste memoria */
         int curent = zona->numar;
         if (curent >= LIMITA) {
             ReleaseSemaphore(hSem, 1, NULL);
             break;
         }
 
-        /* 3. Da cu banul: cat timp cade 2, scrie urmatorul numar */
         while (curent < LIMITA && (rand() % 2 + 1) == 2) {
             curent++;
             zona->numar = curent;
@@ -79,10 +59,8 @@ static int proces_copil(int index)
         }
         fflush(stdout);
 
-        /* 4. Elibereaza semaforul */
         ReleaseSemaphore(hSem, 1, NULL);
 
-        /* Cedam procesorul ca sa aiba si celalalt proces o sansa */
         Sleep(1);
     }
 
@@ -96,7 +74,6 @@ static int proces_copil(int index)
 
 static int proces_parinte(const char *cale_exe)
 {
-    /* Obiectul mapat in memorie, sustinut de pagefile (nu de un fisier pe disc) */
     HANDLE hMap = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE,
                                      0, sizeof(ZonaPartajata), NUME_MEMORIE);
     if (hMap == NULL) {
@@ -113,7 +90,6 @@ static int proces_parinte(const char *cale_exe)
     }
     ZeroMemory(zona, sizeof(ZonaPartajata));
 
-    /* Semafor binar: valoare initiala 1, maxim 1 */
     HANDLE hSem = CreateSemaphoreA(NULL, 1, 1, NUME_SEMAFOR);
     if (hSem == NULL) {
         fprintf(stderr, "CreateSemaphore a esuat: %lu\n", GetLastError());
@@ -122,7 +98,6 @@ static int proces_parinte(const char *cale_exe)
         return 1;
     }
 
-    /* Pornim doua procese separate (aplicatii individuale pentru SO) */
     PROCESS_INFORMATION pi[2];
     for (int i = 0; i < 2; i++) {
         char linie[MAX_PATH + 32];
