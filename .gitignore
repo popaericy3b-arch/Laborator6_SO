@@ -2,3 +2,4 @@ linux/contor
 *.exe
 *.o
 *.obj
+.DS_Store
